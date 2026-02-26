@@ -178,16 +178,29 @@ func (p *subtraceProcessor) flushSubtrace(ctx context.Context, traceID pcommon.T
 	// Build output traces - group by resource and scope
 	td := ptrace.NewTraces()
 
-	// Use first span's resource/scope as template (all should be same resource)
 	if len(state.Spans) > 0 {
 		rs := td.ResourceSpans().AppendEmpty()
 		state.Spans[0].Resource.Resource().CopyTo(rs.Resource())
 
-		ss := rs.ScopeSpans().AppendEmpty()
-		state.Spans[0].Scope.Scope().CopyTo(ss.Scope())
-
+		// Group spans by scope to preserve instrumentation library attribution
+		type scopeKey struct{ name, version string }
+		scopeOrder := []scopeKey{}
+		scopeGroups := map[scopeKey][]SpanEntry{}
 		for _, entry := range state.Spans {
-			entry.Span.CopyTo(ss.Spans().AppendEmpty())
+			scope := entry.Scope.Scope()
+			key := scopeKey{scope.Name(), scope.Version()}
+			if _, exists := scopeGroups[key]; !exists {
+				scopeOrder = append(scopeOrder, key)
+			}
+			scopeGroups[key] = append(scopeGroups[key], entry)
+		}
+		for _, key := range scopeOrder {
+			entries := scopeGroups[key]
+			ss := rs.ScopeSpans().AppendEmpty()
+			entries[0].Scope.Scope().CopyTo(ss.Scope())
+			for _, entry := range entries {
+				entry.Span.CopyTo(ss.Spans().AppendEmpty())
+			}
 		}
 	}
 
