@@ -1,0 +1,43 @@
+# Copyright The OpenTelemetry Authors
+# SPDX-License-Identifier: Apache-2.0
+
+# OpenTelemetry Collector Builder manifest.
+# Builds a custom collector that includes all components used by this demo
+# plus the subtraceaggregator processor for service-level trace insights.
+
+dist:
+  module: github.com/open-telemetry/opentelemetry-demo/otelcol-custom
+  name: otelcol-custom
+  description: OpenTelemetry Collector with subtraceaggregator processor
+  version: 0.145.0
+  output_path: /build/_build
+  otelcol_version: 0.145.0
+  build_tags: "grpcnotrace"
+
+extensions:
+  - gomod: go.opentelemetry.io/collector/extension/zpagesextension v0.145.0
+
+receivers:
+  - gomod: go.opentelemetry.io/collector/receiver/otlpreceiver v0.145.0
+  - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/receiver/httpcheckreceiver v0.145.0
+  - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/receiver/nginxreceiver v0.145.0
+  - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/receiver/dockerstatsreceiver v0.145.0
+  - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/receiver/postgresqlreceiver v0.145.0
+  - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/receiver/redisreceiver v0.145.0
+  - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/receiver/hostmetricsreceiver v0.145.0
+
+processors:
+  - gomod: go.opentelemetry.io/collector/processor/memorylimiterprocessor v0.145.0
+  - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/processor/resourcedetectionprocessor v0.145.0
+  - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/processor/transformprocessor v0.145.0
+  - gomod: github.com/open-telemetry/opentelemetry-demo/processor/subtraceaggregator v0.0.1
+    path: /build/processor/subtraceaggregator
+
+exporters:
+  - gomod: go.opentelemetry.io/collector/exporter/debugexporter v0.145.0
+  - gomod: go.opentelemetry.io/collector/exporter/otlpexporter v0.145.0
+  - gomod: go.opentelemetry.io/collector/exporter/otlphttpexporter v0.145.0
+  - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/exporter/opensearchexporter v0.145.0
+
+connectors:
+  - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/connector/spanmetricsconnector v0.145.0

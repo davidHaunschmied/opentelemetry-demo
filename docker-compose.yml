@@ -428,7 +428,7 @@ services:
       - LOCUST_HOST
       - LOCUST_HEADLESS
       - LOCUST_AUTOSTART
-      - LOCUST_BROWSER_TRAFFIC_ENABLED=true
+      - LOCUST_BROWSER_TRAFFIC_ENABLED=false
       - OTEL_EXPORTER_OTLP_ENDPOINT
       - OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE
       - OTEL_RESOURCE_ATTRIBUTES
@@ -763,7 +763,7 @@ services:
     deploy:
       resources:
         limits:
-          memory: 50M
+          memory: 100M
     restart: unless-stopped
     environment:
       - FLAGD_HOST
@@ -855,9 +855,11 @@ services:
       - "${GRAFANA_PORT}"
     logging: *logging
 
-  # OpenTelemetry Collector
+  # OpenTelemetry Collector (custom build with subtraceaggregator processor)
   otel-collector:
-    image: ${COLLECTOR_CONTRIB_IMAGE}
+    build:
+      context: ./src/otel-collector
+      dockerfile: Dockerfile
     container_name: otel-collector
     deploy:
       resources:
@@ -880,6 +882,8 @@ services:
       opensearch:
         condition: service_healthy
     logging: *logging
+    env_file:
+      - .dynatrace.env
     environment:
       - FRONTEND_PROXY_ADDR
       - IMAGE_PROVIDER_HOST
@@ -892,6 +896,8 @@ services:
       - POSTGRES_PORT
       - POSTGRES_PASSWORD
       - GOMEMLIMIT=160MiB
+      - DT_ENDPOINT
+      - DT_API_TOKEN
 
   # Prometheus
   prometheus:

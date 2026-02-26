@@ -150,6 +150,19 @@ processors:
     check_interval: 5s
     limit_percentage: 80
     spike_limit_percentage: 25
+  subtraceaggregator:
+    timeout: 10s
+    max_spans_per_subtrace: 500
+    # Count database calls per service per request (e.g. detect N+1 queries)
+    attribute_aggregations:
+      - aggregation: count
+        condition: 'attributes["db.system"] != nil'
+        target: subtrace.db_call_count
+    # Propagate exceptions from child spans up to the service root span
+    event_aggregations:
+      - aggregation: copy_event
+        source: exception
+        max_events: 3
   resourcedetection:
     detectors: [env, docker, system]
   transform/sanitize_spans:
@@ -205,7 +218,7 @@ service:
   pipelines:
     traces:
       receivers: [otlp]
-      processors: [resourcedetection, memory_limiter, transform/sanitize_spans]
+      processors: [resourcedetection, memory_limiter, transform/sanitize_spans, subtraceaggregator]
       exporters: [otlp_grpc/jaeger, debug, spanmetrics]
     metrics:
       receivers: [docker_stats, httpcheck/frontend-proxy, hostmetrics, nginx, otlp, postgresql, redis, spanmetrics]

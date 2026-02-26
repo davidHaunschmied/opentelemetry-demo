@@ -8,11 +8,23 @@
 ## Note: the spanmetrics exporter must be included in the exporters array
 ## if overriding the traces pipeline.
 ##
-#  exporters:
-#    otlp_http/example:
-#      endpoint: <your-endpoint-url>
-#
-#  service:
-#    pipelines:
-#      traces:
-#        exporters: [spanmetrics, otlp_http/example]
+exporters:
+  otlp_http/dynatrace:
+    endpoint: "${DT_ENDPOINT}"
+    headers:
+      Authorization: "${DT_API_TOKEN}"
+
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [resourcedetection, memory_limiter, transform/sanitize_spans, subtraceaggregator]
+      exporters: [otlp_grpc/jaeger, debug, spanmetrics, otlp_http/dynatrace]
+    metrics:
+      receivers: [docker_stats, httpcheck/frontend-proxy, hostmetrics, nginx, otlp, postgresql, redis, spanmetrics]
+      processors: [resourcedetection, memory_limiter]
+      exporters: [otlp_http/prometheus, debug, otlp_http/dynatrace]
+    logs:
+      receivers: [otlp]
+      processors: [resourcedetection, memory_limiter]
+      exporters: [opensearch, debug, otlp_http/dynatrace] 
