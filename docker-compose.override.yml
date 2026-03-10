@@ -1,0 +1,14 @@
+# Local overrides - NOT committed to the fork.
+# Docker Compose automatically merges this file with docker-compose.yml.
+#
+# Problem: LOCUST_BROWSER_TRAFFIC_ENABLED=true is hardcoded in docker-compose.yml.
+# The Playwright/Chromium WebsiteBrowserUser leaks memory, OOM-killing the
+# load-generator container after ~2 days of continuous running.
+# Community issue: https://github.com/open-telemetry/opentelemetry-demo/issues/2678
+#
+# Fix: disable browser traffic and reduce user count for long-running stability.
+
+services:
+  load-generator:
+    environment:
+      - LOCUST_BROWSER_TRAFFIC_ENABLED=false
